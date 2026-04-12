@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../../../../trigger.config.ts"],
+  "sourcesContent": ["import type { TriggerConfig } from \"@trigger.dev/sdk\";\n\nexport const config: TriggerConfig = {\n  // Updated with user's project ref\n  project: \"proj_dkclmcrccgwxxswwgwzc\",\n\n  // Replaced deprecated triggerDirectories\n  dirs: [\"triggers\"],\n\n  maxDuration: 60,\n\n  onSuccess: (job) => {\n    console.log(`[Trigger.dev] Job ${job.id} completed successfully.`);\n  },\n\n  onFailure: (job, error) => {\n    console.error(`[Trigger.dev] Job ${job.id} failed:`, error);\n  },\n\n  build: {},\n};\nexport const resolveEnvVars = undefined;"],
+  "mappings": ";;;;;;AAAA;AAEO,IAAM,SAAwB;AAAA;AAAA,EAEnC,SAAS;AAAA;AAAA,EAGT,MAAM,CAAC,UAAU;AAAA,EAEjB,aAAa;AAAA,EAEb,WAAW,wBAAC,QAAQ;AAClB,YAAQ,IAAI,qBAAqB,IAAI,EAAE,0BAA0B;AAAA,EACnE,GAFW;AAAA,EAIX,WAAW,wBAAC,KAAK,UAAU;AACzB,YAAQ,MAAM,qBAAqB,IAAI,EAAE,YAAY,KAAK;AAAA,EAC5D,GAFW;AAAA,EAIX,OAAO,CAAC;AACV;AACO,IAAM,iBAAiB;",
+  "names": []
+}

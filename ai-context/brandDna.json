@@ -1,0 +1,66 @@
+{
+  "brand_identity": {
+    "clinic_name": "ChiroOne Gold Coast",
+    "locations": [
+      "Helensvale",
+      "Canungra"
+    ],
+    "positioning": "Your trusted clinic for spinal and movement care. Holistic, multi-disciplinary, and family-oriented.",
+    "tone": "Approachable, calm, reliable, and deeply professional. Avoids jargon, prioritizes clarity and warmth.",
+    "core_promise": "Helping people stop organizing their lives around pain through individualized care plans and combined therapy.",
+    "energy": "Serene and encouraging. Provides security and hope based on real clinical experience."
+  },
+  "target_personas": [
+    {
+      "segment": "Active Families & Individuals in Gold Coast",
+      "pain_points": [
+        "Back, neck, shoulder and hip pain",
+        "Headaches",
+        "Musculoskeletal discomfort",
+        "Frustration with 'quick fixes' or medication-only solutions"
+      ],
+      "desires": [
+        "Long-term holistic care",
+        "Sustainable mobility",
+        "Active lifestyle confidence"
+      ]
+    }
+  ],
+  "geo_context": {
+    "city": "Gold Coast",
+    "neighborhoods": [
+      "Helensvale",
+      "Canungra"
+    ],
+    "vibe": "Active, outdoor living, family-centric, health-conscious."
+  },
+  "treatments_allowed": [
+    "Chiropractic adjustments",
+    "Non-surgical spinal decompression",
+    "Active therapies",
+    "Therapeutic massage",
+    "Exercise programs",
+    "Functional health evaluations"
+  ],
+  "compliance_rules": {
+    "prohibited_claims": [
+      "Guaranteed cures",
+      "100% assured results",
+      "No risks/side effects",
+      "Substitute for conventional medicine",
+      "Curing non-musculoskeletal diseases"
+    ],
+    "prohibited_styles": [
+      "Aggressive sales",
+      "Sensationalist miracle cures",
+      "Fear-mongering/Alarmism",
+      "Mocking pain",
+      "Extreme cracking sounds"
+    ]
+  },
+  "strategic_pillars_logic": {
+    "educational": "Educate first to help patients understand the 'why' of their pain.",
+    "process": "Show improvement as a journey (accompaniment).",
+    "beliefs": "Respectfully confront myths like 'pain is normal for my age'."
+  }
+}

@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ContentPlan {
+  id          String        @id @default(uuid())
+  generatedAt DateTime      @default(now())
+  status      String
+  focus       String
+  items       ContentItem[]
+}
+
+model ContentItem {
+  id               String      @id @default(uuid())
+  day              Int
+  category         String
+  hook             String
+  body             String
+  cta              String
+  format           String
+  mediaRequirement String
+  mediaUrl         String?
+  planId           String
+  plan             ContentPlan @relation(fields: [planId], references: [id])
+  posts            Post[]
+}
+
+model Post {
+  id            String      @id @default(uuid())
+  platform      String
+  status        String
+  publishedAt   DateTime?
+  externalLink  String?
+  contentItemId String
+  contentItem   ContentItem @relation(fields: [contentItemId], references: [id])
+}
+
+model BrandDNA {
+  id             String   @id @default(uuid())
+  name           String
+  voice          String
+  targetAudience String
+  corePillars    String
+  updatedAt      DateTime @default(now()) @updatedAt
+}

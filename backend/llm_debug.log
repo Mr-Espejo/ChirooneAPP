@@ -1,0 +1,20 @@
+[2026-04-11T15:15:27.696Z] Using baseURL: https://api.kie.ai/gemini-3.1-pro/v1
+[2026-04-11T15:16:53.876Z] Using baseURL: https://api.kie.ai/gemini-3.1-pro/v1
+[2026-04-11T15:17:58.230Z] Using baseURL: https://api.kie.ai/gemini-3.1-pro-preview/v1
+[2026-04-11T15:18:29.595Z] Using baseURL: https://api.kie.ai/v1 for model: deepseek-chat
+[2026-04-11T15:19:05.496Z] Using baseURL: https://api.kie.ai/v1 for model: deepseek-chat
+[2026-04-11T15:19:57.037Z] Using baseURL: https://api.kie.ai/gemini-3.1-pro/v1 for model: gemini-3.1-pro
+[2026-04-11T15:21:13.624Z] Using baseURL: https://api.kie.ai/v1 for model: gpt-4o
+[2026-04-11T15:21:42.368Z] Using baseURL: https://api.kie.ai/gemini-3.1-pro/v1 for model: gemini-3.1-pro
+[2026-04-11T15:23:19.064Z] Using baseURL: https://api.kie.ai/gemini-3.1-pro/v1 for model: gemini-3.1-pro
+[2026-04-11T15:25:00.132Z] Response Status: 200
+[2026-04-11T15:28:57.309Z] Response Status: 200
+[2026-04-11T15:30:24.450Z] Response Status: 200
+[2026-04-11T15:34:05.503Z] Response Status: 200
+[2026-04-11T15:38:14.613Z] Response Status: 200
+[2026-04-11T15:39:49.577Z] Response Status: 200
+[2026-04-11T15:55:29.066Z] Response Status: 200
+[2026-04-11T15:59:24.555Z] Response Status: 200
+[2026-04-11T15:59:43.514Z] Response Status: 200
+[2026-04-11T16:05:44.995Z] Response Status: 200
+[2026-04-11T17:35:23.416Z] Response Status: 200

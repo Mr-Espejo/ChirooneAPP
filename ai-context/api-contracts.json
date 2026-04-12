@@ -1,0 +1,37 @@
+{
+  "endpoints": {
+    "ideation": {
+      "POST /api/ideate": {
+        "payload": {
+          "currentFocus": "string",
+          "brandId": "string (optional)"
+        },
+        "response": "ContentPlan (schema: contentPlanSchema.md)"
+      }
+    },
+    "generation": {
+      "POST /api/generate-media": {
+        "payload": {
+          "contentItemId": "string",
+          "type": "video | image"
+        },
+        "response": {
+          "taskId": "string",
+          "status": "pending | processing | completed"
+        }
+      }
+    },
+    "publishing": {
+      "POST /api/publish": {
+        "payload": {
+          "planId": "string",
+          "platforms": ["instagram", "tiktok"]
+        },
+        "response": {
+          "status": "published | error",
+          "links": ["url"]
+        }
+      }
+    }
+  }
+}
