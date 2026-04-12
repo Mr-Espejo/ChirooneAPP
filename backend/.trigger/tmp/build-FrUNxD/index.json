@@ -1,0 +1,101 @@
+{
+  "configPath": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\trigger.config.mjs",
+  "customConditions": [
+  ],
+  "queues": [
+  ],
+  "runtime": "node",
+  "runtimeVersion": "24.11.0",
+  "tasks": [
+    {
+      "entryPoint": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\triggers\\watchdogCron.mjs",
+      "filePath": "triggers/watchdogCron.ts",
+      "id": "generation-watchdog",
+      "maxDuration": 60,
+      "schedule": {
+        "cron": "0 1 * * *",
+        "timezone": "UTC"
+      },
+      "triggerSource": "schedule"
+    },
+    {
+      "entryPoint": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\triggers\\ideationCron.mjs",
+      "filePath": "triggers/ideationCron.ts",
+      "id": "weekly-ideation-task",
+      "maxDuration": 60,
+      "schedule": {
+        "cron": "0 9 * * 1",
+        "timezone": "UTC"
+      },
+      "triggerSource": "schedule"
+    },
+    {
+      "entryPoint": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\triggers\\mediaPolling.mjs",
+      "filePath": "triggers/mediaPolling.ts",
+      "id": "generate-video-task",
+      "maxDuration": 600
+    },
+    {
+      "entryPoint": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\triggers\\mediaPolling.mjs",
+      "filePath": "triggers/mediaPolling.ts",
+      "id": "poll-media-task",
+      "maxDuration": 300
+    },
+    {
+      "entryPoint": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\triggers\\pipelineCrons.mjs",
+      "filePath": "triggers/pipelineCrons.ts",
+      "id": "sync-media-cron",
+      "maxDuration": 60,
+      "schedule": {
+        "cron": "0,30 * * * *",
+        "timezone": "UTC"
+      },
+      "triggerSource": "schedule"
+    },
+    {
+      "entryPoint": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\triggers\\pipelineCrons.mjs",
+      "filePath": "triggers/pipelineCrons.ts",
+      "id": "start-video-generation-cron",
+      "maxDuration": 60,
+      "schedule": {
+        "cron": "15,45 * * * *",
+        "timezone": "UTC"
+      },
+      "triggerSource": "schedule"
+    },
+    {
+      "entryPoint": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\triggers\\pipelineCrons.mjs",
+      "filePath": "triggers/pipelineCrons.ts",
+      "id": "high-frequency-publishing-cron",
+      "maxDuration": 60,
+      "schedule": {
+        "cron": "*/15 * * * *",
+        "timezone": "UTC"
+      },
+      "triggerSource": "schedule"
+    },
+    {
+      "entryPoint": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\triggers\\publishingCron.mjs",
+      "filePath": "triggers/publishingCron.ts",
+      "id": "daily-publishing-task",
+      "maxDuration": 60,
+      "schedule": {
+        "cron": "0 */4 * * *",
+        "timezone": "UTC"
+      },
+      "triggerSource": "schedule"
+    }
+  ],
+  "timings": {
+    "integrations/kieaiService.ts": 2.047200000000089,
+    "modules/publishing/publishing.service.ts": 63.62959999999998,
+    "triggers/ideationCron.ts": 65.2772,
+    "triggers/mediaPolling.ts": 10.894900000000007,
+    "triggers/pipelineCrons.ts": 12.335899999999924,
+    "triggers/publishingCron.ts": 3.4021999999999935,
+    "triggers/videoGeneration.ts": 6.50890000000004,
+    "triggers/watchdogCron.ts": 105.76729999999998,
+    "utils/prisma.ts": 66.5059
+  },
+  "workerEntryPoint": "C:\\Users\\andre\\Downloads\\DocsDhiroOne\\ChiorooneContent\\backend\\.trigger\\tmp\\build-FrUNxD\\AppData\\Local\\npm-cache\\_npx\\f51a09bd0abf5f10\\node_modules\\trigger.dev\\dist\\esm\\entryPoints\\dev-run-worker.mjs"
+}

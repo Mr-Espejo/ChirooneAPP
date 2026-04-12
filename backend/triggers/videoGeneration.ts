@@ -23,8 +23,8 @@ export const generateVideoTask = task({
           image_urls: [imageUrl],
           prompt: prompt,
           mode: "normal",
-          duration: "6",
-          resolution: "480p",
+          duration: "30",
+          resolution: "720p",
           aspect_ratio: "9:16"
         }
       })
@@ -33,6 +33,11 @@ export const generateVideoTask = task({
     const result = await resp.json() as any;
     
     if (result.code !== 200) {
+      console.error(`[Video] Safety or API Error: ${result.msg}`);
+      await prisma.post.updateMany({
+        where: { contentItemId: postId },
+        data: { status: "FAILED_BY_SAFETY" }
+      });
       throw new Error(`Kie.ai Error: ${result.msg}`);
     }
 
@@ -52,10 +57,10 @@ export const generateVideoTask = task({
         }
       });
       const statusData = await statusResp.json() as any;
-      const status = statusData.data?.status || statusData.msg;
+      const status = (statusData.data?.status || statusData.msg || "").toUpperCase();
 
       if (status === "SUCCESS" || status === "COMPLETED") {
-        const videoUrl = statusData.data?.videos?.[0]?.url || statusData.data?.url;
+        const videoUrl = statusData.data?.videos?.[0]?.url || statusData.data?.url || statusData.data?.videoUrl;
         if (videoUrl) {
           console.log(`[Video] SUCCESS! URL: ${videoUrl}`);
           

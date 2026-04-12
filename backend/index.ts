@@ -19,7 +19,9 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/api/creatives", async (req, res) => {
+  console.log("[Backend] Request received: GET /api/creatives");
   try {
+    const startTime = Date.now();
     const creatives = await prisma.contentItem.findMany({
       include: {
         posts: true,
@@ -28,8 +30,10 @@ app.get("/api/creatives", async (req, res) => {
         day: "asc",
       },
     });
+    console.log(`[Backend] Request finished in ${Date.now() - startTime}ms. Items: ${creatives.length}`);
     res.json(creatives);
   } catch (error) {
+    console.error("[Backend] Error in /api/creatives:", error);
     res.status(500).json({ error: (error as Error).message });
   }
 });

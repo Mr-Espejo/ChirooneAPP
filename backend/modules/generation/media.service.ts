@@ -19,7 +19,6 @@ export class MediaService {
         },
         body: JSON.stringify({
           model: "nano-banana-2",
-          callBackUrl: `https://chiro-api.com/webhook/media/${companyId}/${postId}`,
           input: {
             prompt: `${prompt}. Please ensure the brand logo from the reference image is placed naturally in the scene (e.g. on a wall, sign, or item).`,
             image_input: [this.logoUrl],

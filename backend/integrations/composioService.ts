@@ -1,13 +1,3 @@
-import { ComposioToolSet } from "composio-core";
-import { google } from "googleapis";
-import stream from "stream";
-
-interface PublishResult {
-  success: boolean;
-  platform: string;
-  id?: string;
-}
-
 export class ComposioService {
   private ig = {
     accountId: "0b6c39bd-3100-4b5c-9aa0-d2976fb532b5",
@@ -23,22 +13,31 @@ export class ComposioService {
     clientId: process.env.YOUTUBE_CLIENT_ID || "",
     clientSecret: process.env.YOUTUBE_CLIENT_SECRET || "",
     refreshToken: process.env.YOUTUBE_REFRESH_TOKEN || "", 
-    // ^ El refresh token que obtuvimos del auth! Lo leeremos del env
   };
 
   private tt = {
     accessToken: process.env.TIKTOK_ACCESS_TOKEN || "",
   };
 
-  private _toolset: ComposioToolSet | null = null;
+  private _toolset: any | null = null;
+  private _google: any | null = null;
 
-  private get toolset(): ComposioToolSet {
+  private async getToolset(): Promise<any> {
     if (!this._toolset) {
+      const { ComposioToolSet } = await import("composio-core");
       this._toolset = new ComposioToolSet({
         apiKey: process.env.COMPOSIO_API_KEY || "",
       });
     }
     return this._toolset;
+  }
+
+  private async getGoogle(): Promise<any> {
+    if (!this._google) {
+      const { google } = await import("googleapis");
+      this._google = google;
+    }
+    return this._google;
   }
 
   constructor() {}
@@ -91,7 +90,8 @@ export class ComposioService {
     const isVideo = /\.(mp4|mov|avi|webm)(\?|$)/i.test(mediaUrl);
 
     console.log("[Instagram] Step 1: Creating media container...");
-    const containerRes: any = await this.toolset.executeAction({
+    const toolset = await this.getToolset();
+    const containerRes: any = await toolset.executeAction({
       actionName: "INSTAGRAM_CREATE_MEDIA_CONTAINER",
       params: {
         ig_user_id: this.ig.userId,
@@ -115,7 +115,7 @@ export class ComposioService {
     }
 
     console.log("[Instagram] Step 3: Publishing...");
-    const publishRes: any = await this.toolset.executeAction({
+    const publishRes: any = await toolset.executeAction({
       actionName: "INSTAGRAM_CREATE_POST",
       params: { ig_user_id: this.ig.userId, creation_id: creationId },
       connectedAccountId: this.ig.accountId,
@@ -132,7 +132,8 @@ export class ComposioService {
     while (Date.now() - start < maxWaitMs) {
       await new Promise(r => setTimeout(r, 10_000));
 
-      const res: any = await this.toolset.executeAction({
+      const toolset = await this.getToolset();
+      const res: any = await toolset.executeAction({
         actionName: "INSTAGRAM_GET_POST_STATUS",
         params: { creation_id: creationId },
         connectedAccountId: this.ig.accountId,
@@ -157,6 +158,7 @@ export class ComposioService {
       throw new Error("[YouTube] Fatal Error: Falta YOUTUBE_REFRESH_TOKEN en el .env.");
     }
 
+    const google = await this.getGoogle();
     const oauth2Client = new google.auth.OAuth2(
       this.yt.clientId,
       this.yt.clientSecret
@@ -165,15 +167,12 @@ export class ComposioService {
     
     const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
-    console.log("[YouTube] Step 2: Descargando video a memoria...");
+    console.log("[YouTube] Step 2: Iniciando stream desde origen...");
     const vidRes = await fetch(mediaUrl);
-    const arrayBuffer = await vidRes.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    if (!vidRes.body) throw new Error("[YouTube] Falló la descarga del video.");
+    const contentLength = vidRes.headers.get("content-length");
 
-    const bufferStream = new stream.PassThrough();
-    bufferStream.end(buffer);
-
-    console.log(`[YouTube] Step 3: Iniciando subida (${buffer.length} bytes)...`);
+    console.log(`[YouTube] Step 3: Iniciando subida (${contentLength} bytes)...`);
     
     const res = await youtube.videos.insert({
         part: ['snippet', 'status'],
@@ -182,15 +181,15 @@ export class ComposioService {
                 title: title || "ChiroOne Short",
                 description: description,
                 tags: tags || ['chiropractor', 'goldcoast', 'health'],
-                categoryId: '22' // People & Blogs
+                categoryId: '22'
             },
             status: {
-                privacyStatus: 'private', // Cambiar a 'public' cuando estés listo
+                privacyStatus: 'private',
                 selfDeclaredMadeForKids: false
             }
         },
         media: {
-            body: bufferStream
+            body: vidRes.body // Direct stream
         }
     });
 
@@ -209,9 +208,9 @@ export class ComposioService {
     }
 
     const vidRes = await fetch(mediaUrl);
-    const arrayBuffer = await vidRes.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const fileSize = buffer.length;
+    const fileSizeStr = vidRes.headers.get("content-length");
+    if (!fileSizeStr || !vidRes.body) throw new Error("[TikTok] No se pudo obtener el tamaño o cuerpo del video.");
+    const fileSize = parseInt(fileSizeStr);
 
     console.log("[TikTok] Step 2: Iniciando subida directa (Content Posting API)...");
     const initRes = await fetch("https://open.tiktokapis.com/v2/post/publish/video/init/", {
@@ -244,7 +243,7 @@ export class ComposioService {
     const publishId = initData.data.publish_id;
     const uploadUrl = initData.data.upload_url;
 
-    console.log(`[TikTok] Step 3: URL generada. Subiendo archivo (${fileSize} bytes)...`);
+    console.log(`[TikTok] Step 3: URL generada. Transmitiendo archivo (${fileSize} bytes)...`);
     const uploadRequest = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
@@ -252,7 +251,7 @@ export class ComposioService {
           "Content-Length": fileSize.toString(),
           "Content-Range": `bytes 0-${fileSize - 1}/${fileSize}`
       },
-      body: buffer
+      body: vidRes.body // Direct stream from fetch
     });
 
     if (uploadRequest.status >= 200 && uploadRequest.status < 300) {

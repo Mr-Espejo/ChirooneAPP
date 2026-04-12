@@ -7,7 +7,7 @@ const API_KEY = process.env.KIEAI_API_KEY;
 
 export const pollMediaTask = task({
   id: "poll-media-task",
-  maxDuration: 300, 
+  maxDuration: 300,
   run: async (payload: { taskId: string; postId: string; companyId: string }) => {
     const { taskId, postId, companyId } = payload;
     let isCompleted = false;
@@ -20,24 +20,25 @@ export const pollMediaTask = task({
       console.log(`[Trigger] Polling attempt ${attempts} for ${taskId}`);
 
       const resp = await fetch(`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${taskId}`, {
-        headers: { 
+        headers: {
           "x-api-key": API_KEY || "",
           "Authorization": `Bearer ${API_KEY}`
         }
       });
 
       const result = await resp.json() as any;
-      const status = result.data?.status || result.msg;
+      const status = (result.data?.status || result.msg || "").toUpperCase();
 
       if (status === "SUCCESS" || status === "COMPLETED") {
         const imageUrl = result.data?.images?.[0]?.url || result.data?.url;
         if (imageUrl) {
           console.log(`[Trigger] Task ${taskId} COMPLETED! URL: ${imageUrl}`);
-          
+
           const contentItem = await prisma.contentItem.update({
             where: { id: postId },
             data: {
               mediaUrl: imageUrl,
+              externalTaskId: null, // Clear task ID as it's finished
               posts: {
                 updateMany: {
                   where: { status: "WAITING_FOR_MEDIA" },
@@ -47,11 +48,28 @@ export const pollMediaTask = task({
             }
           });
 
-          await generateVideoTask.trigger({ 
-            postId, 
-            imageUrl, 
-            prompt: contentItem.mediaRequirement, // Use mediaRequirement as video prompt if not specified
-            companyId 
+          let finalVideoPrompt = contentItem.videoRequirement || contentItem.mediaRequirement;
+          
+          try {
+            if (contentItem.videoRequirement && contentItem.videoRequirement.startsWith("{")) {
+              const storyboard = JSON.parse(contentItem.videoRequirement);
+              if (storyboard.scenes) {
+                const motions = storyboard.scenes.map((s: any) => s.motion_intent).join(". ");
+                const context = storyboard.video_context 
+                  ? ` Pacing: ${storyboard.video_context.pacing}, Style: ${storyboard.video_context.camera_style}.` 
+                  : "";
+                finalVideoPrompt = `${motions}${context}`;
+              }
+            }
+          } catch (e) {
+            console.error("[Polling] Error parsing storyboard JSON, falling back to raw prompt");
+          }
+
+          await generateVideoTask.trigger({
+            postId,
+            imageUrl,
+            prompt: finalVideoPrompt,
+            companyId
           });
 
           isCompleted = true;

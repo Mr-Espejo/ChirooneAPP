@@ -15,7 +15,7 @@ model ContentPlan {
   generatedAt DateTime      @default(now())
   status      String
   focus       String
-  items       ContentItem[]
+  schedule    ContentItem[]
 }
 
 model ContentItem {
@@ -27,7 +27,11 @@ model ContentItem {
   cta              String
   format           String
   mediaRequirement String
+  videoRequirement String?
   mediaUrl         String?
+  videoUrl         String?
+  imageTaskId      String?
+  videoTaskId      String?
   planId           String
   plan             ContentPlan @relation(fields: [planId], references: [id])
   posts            Post[]
@@ -39,6 +43,7 @@ model Post {
   status        String
   publishedAt   DateTime?
   externalLink  String?
+  lastError     String?
   contentItemId String
   contentItem   ContentItem @relation(fields: [contentItemId], references: [id])
 }

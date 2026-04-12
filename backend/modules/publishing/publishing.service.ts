@@ -2,11 +2,14 @@ import { prisma } from "../../utils/prisma.js";
 import { composioService } from "../../integrations/composioService.js";
 
 export class PublishingService {
-  async publishPendingPosts() {
+  async publishPendingPosts(options: { dryRun?: boolean } = {}) {
     const pendingPosts = await prisma.post.findMany({
       where: {
         status: "READY_TO_PUBLISH",
-        publishedAt: null
+        OR: [
+          { publishedAt: null },
+          { publishedAt: { lte: new Date() } }
+        ]
       },
       include: {
         contentItem: true
@@ -28,8 +31,22 @@ export class PublishingService {
         const caption = `${post.contentItem.hook}\n\n${post.contentItem.body}\n\n${post.contentItem.cta}`;
         
         const platform = post.platform.toLowerCase() as 'instagram' | 'tiktok' | 'youtube' | 'facebook';
+        
+        if (options.dryRun) {
+          console.log(`[DryRun] Would publish post ${post.id} to ${platform}`);
+          results.push({ id: post.id, status: "DRY_RUN", platform });
+          continue;
+        }
+
+        // PRIORITIZE VIDEO OVER IMAGE
+        const finalMediaUrl = post.contentItem.videoUrl || post.contentItem.mediaUrl;
+        
+        if (!finalMediaUrl) {
+          throw new Error(`Post ${post.id} missing media URL`);
+        }
+
         const response = await composioService.publishMedia(
-          post.contentItem.mediaUrl,
+          finalMediaUrl,
           caption,
           platform
         );
@@ -40,17 +57,23 @@ export class PublishingService {
             data: {
               status: "PUBLISHED",
               publishedAt: new Date(),
-              externalLink: `https://${platform}.com/posts/${post.id}` 
+              externalLink: `https://${platform}.com/posts/${post.id}`,
+              lastError: null 
             }
           });
           results.push({ id: post.id, status: "SUCCESS" });
         }
       } catch (error) {
         console.error(`Error publishing post ${post.id}:`, error);
-        await prisma.post.update({
-          where: { id: post.id },
-          data: { status: "FAILED" }
-        });
+        if (!options.dryRun) {
+          await prisma.post.update({
+            where: { id: post.id },
+            data: { 
+              status: "FAILED",
+              lastError: (error as Error).message
+            }
+          });
+        }
         results.push({ id: post.id, status: "FAILED", error: (error as Error).message });
       }
     }
