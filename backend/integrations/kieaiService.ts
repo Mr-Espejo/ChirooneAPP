@@ -12,15 +12,15 @@ export class KieaiService {
     try {
       const response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          "Authorization": `Bearer ${this.apiKey}` 
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
           model: "grok-imagine/image-to-video",
           input: {
             image_urls: [imageUrl],
-            prompt: `Cinematic motion: ${prompt}. Professional chiropractic aesthetic. High quality 4k.`,
+            prompt: `${prompt}. Professional chiropractic aesthetic. High quality 4k.`,
             mode: "normal",
             duration: "30",
             resolution: "720p",
@@ -32,9 +32,9 @@ export class KieaiService {
 
       const result = await response.json() as any;
       const taskId = result.data?.taskId || result.taskId;
-      
+
       if (!taskId) throw new Error(`Failed to get taskId: ${JSON.stringify(result)}`);
-      
+
       return { taskId };
     } catch (error: any) {
       console.error("[KieaiService] Error creating video task:", error.message);
