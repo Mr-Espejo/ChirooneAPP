@@ -1,0 +1,36 @@
+services:
+  chiroone-backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chiroone-backend
+    restart: always
+    ports:
+      - "3009:3009"
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=production
+      - PORT=3009
+    networks:
+      - chiro-network
+
+  chiroone-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://72.61.126.163:3009
+    container_name: chiroone-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://72.61.126.163:3009
+    networks:
+      - chiro-network
+
+networks:
+  chiro-network:
+    driver: bridge
