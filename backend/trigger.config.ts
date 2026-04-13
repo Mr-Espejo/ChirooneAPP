@@ -1,13 +1,18 @@
-import type { TriggerConfig } from "@trigger.dev/sdk";
+import { defineConfig } from "@trigger.dev/sdk/v3";
+import { prismaExtension } from "@trigger.dev/build/extensions/prisma";
 
-export const config: TriggerConfig = {
-  project: "proj_dkclmcrccgwxxswwgwzc", // Updated with user's project ref
-  dirs: ["triggers"], // Replaced deprecated triggerDirectories
-  maxDuration: 60,
-  onSuccess: (job) => {
-    console.log(`[Trigger.dev] Job ${job.id} completed successfully.`);
+export default defineConfig({
+  project: "proj_dkclmcrccgwxxswwgwzc",
+  runtime: "node",
+  logLevel: "log",
+  dirs: ["triggers"],
+  maxDuration: 300, 
+  build: {
+    extensions: [
+      prismaExtension({
+        mode: "legacy",
+        schema: "prisma/schema.prisma",
+      }),
+    ],
   },
-  onFailure: (job, error) => {
-    console.error(`[Trigger.dev] Job ${job.id} failed:`, error);
-  },
-};
+});
