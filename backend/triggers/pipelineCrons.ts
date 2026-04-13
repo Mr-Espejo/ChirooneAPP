@@ -100,7 +100,7 @@ export const startVideoGenerationCron = schedules.task({
     const { prisma } = await import("../utils/prisma.ts");
     const { kieaiService } = await import("../integrations/kieaiService.ts");
 
-    const itemsWaitingForVideo = await prisma.contentItem.findMany({
+    const item = await prisma.contentItem.findFirst({
       where: {
         mediaUrl: { not: null },
         videoUrl: null,
@@ -109,13 +109,15 @@ export const startVideoGenerationCron = schedules.task({
       }
     });
 
-    for (const item of itemsWaitingForVideo) {
-      try {
-        const videoTask = await kieaiService.createVideoFromImage(
-          item.mediaUrl!,
-          item.storyboard || item.hook || "Cinematic transition"
-        );
+    if (!item) return;
 
+    try {
+      const videoTask = await kieaiService.createVideoFromImage(
+        item.mediaUrl!,
+        item.storyboard || item.hook || "Cinematic transition"
+      );
+
+      if (videoTask?.taskId) {
         await prisma.contentItem.update({
           where: { id: item.id },
           data: {
@@ -124,9 +126,11 @@ export const startVideoGenerationCron = schedules.task({
           }
         });
         logger.info(`Pipeline: Started Video for ${item.id}`, { taskId: videoTask.taskId });
-      } catch (e) {
-        logger.error(`Pipeline: Video Generation Trigger Failed for ${item.id}`, { error: (e as any).message });
+      } else {
+        logger.warn(`Pipeline: No taskId returned for ${item.id}`, { videoTask });
       }
+    } catch (e) {
+      logger.error(`Pipeline: Video Generation Trigger Failed for ${item.id}`, { error: (e as any).message });
     }
   }
 });

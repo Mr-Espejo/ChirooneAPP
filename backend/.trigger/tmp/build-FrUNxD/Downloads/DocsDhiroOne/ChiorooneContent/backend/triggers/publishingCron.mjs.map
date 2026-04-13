@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../../../../../triggers/publishingCron.ts"],
-  "sourcesContent": ["import { schedules, logger } from \"@trigger.dev/sdk/v3\";\nimport { publishingService } from \"../modules/publishing/publishing.service.js\";\n\nexport const dailyPublishingTask = schedules.task({\n  id: \"daily-publishing-task\",\n  cron: \"0 */4 * * *\",\n  run: async (payload, io, ctx) => {\n    logger.info(\"Starting Daily Publishing Task\", { payload });\n    \n    const isDryRun = payload?.externalPayload?.dryRun === true;\n    \n    if (isDryRun) {\n      logger.warn(\"Running in DRY_RUN mode. No real posts will be published.\");\n    }\n\n    const results = await publishingService.publishPendingPosts({ dryRun: isDryRun });\n    \n    logger.info(\"Publishing task completed.\", { results });\n    return results;\n  },\n});\n"],
-  "mappings": ";;;;;;;;;;;;;;;;;AAAA;AAGO,IAAM,sBAAsB,kBAAU,KAAK;AAAA,EAChD,IAAI;AAAA,EACJ,MAAM;AAAA,EACN,KAAK,8BAAO,SAAS,IAAI,QAAQ;AAC/B,WAAO,KAAK,kCAAkC,EAAE,QAAQ,CAAC;AAEzD,UAAM,WAAW,SAAS,iBAAiB,WAAW;AAEtD,QAAI,UAAU;AACZ,aAAO,KAAK,2DAA2D;AAAA,IACzE;AAEA,UAAM,UAAU,MAAM,kBAAkB,oBAAoB,EAAE,QAAQ,SAAS,CAAC;AAEhF,WAAO,KAAK,8BAA8B,EAAE,QAAQ,CAAC;AACrD,WAAO;AAAA,EACT,GAbK;AAcP,CAAC;",
-  "names": []
-}

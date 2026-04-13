@@ -5,10 +5,11 @@ WORKDIR /app
 # Instalar dependencias necesarias para Prisma y SSL
 RUN apt-get update && apt-get install -y openssl python3 make g++ && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm install
 
-COPY . .
+COPY backend/ ./
+COPY ai-context/ /ai-context/
 RUN npx prisma generate
 
 FROM node:20-slim

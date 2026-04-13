@@ -17,12 +17,15 @@ export class KieaiService {
           "Authorization": `Bearer ${this.apiKey}` 
         },
         body: JSON.stringify({
-          model: "grok-itv-1", // Image to Video model
+          model: "grok-imagine/image-to-video",
           input: {
-             image_url: imageUrl,
-             prompt: `Cinematic motion: ${prompt}. Professional chiropractic aesthetic. High quality 4k.`,
-             duration: 10,
-             fps: 30
+            image_urls: [imageUrl],
+            prompt: `Cinematic motion: ${prompt}. Professional chiropractic aesthetic. High quality 4k.`,
+            mode: "normal",
+            duration: "30",
+            resolution: "720p",
+            aspect_ratio: "9:16",
+            fps: 30
           }
         })
       });
