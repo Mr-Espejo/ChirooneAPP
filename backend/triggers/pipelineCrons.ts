@@ -8,11 +8,11 @@ const API_KEY = process.env.KIEAI_API_KEY;
  */
 export const syncMediaCron = schedules.task({
   id: "sync-media-cron",
-  cron: "0,30 * * * *", 
+  cron: "0,30 * * * *",
   run: async () => {
     const { prisma } = await import("../utils/prisma.ts");
     logger.info("Pipeline: Syncing active media tasks...");
-    
+
     const pendingItems = await prisma.contentItem.findMany({
       where: {
         OR: [
@@ -32,7 +32,7 @@ export const syncMediaCron = schedules.task({
           });
           const result = await resp.json() as any;
           const status = (result.data?.status || result.msg || "").toUpperCase();
-          
+
           if (status === "SUCCESS" || status === "COMPLETED") {
             let url = result.data?.url;
 
@@ -50,20 +50,21 @@ export const syncMediaCron = schedules.task({
             url = url || result.data?.videos?.[0]?.url || result.data?.images?.[0]?.url;
 
             if (!url) {
-                logger.warn(`Task ${taskId} reported success but no URL found!`, { result });
-                return;
+              logger.warn(`Task ${taskId} reported success but no URL found!`, { result });
+              return;
             }
 
             const isVideo = /\.(mp4|mov|avi|webm)(\?|$)/i.test(url);
-            
+
             await prisma.contentItem.update({
               where: { id: item.id },
-              data: { 
+              data: {
                 ...(isVideo ? { videoUrl: url, videoTaskId: null } : { mediaUrl: url, imageTaskId: null }),
-                posts: { 
-                  updateMany: { 
-                    data: { status: isVideo ? "READY_TO_PUBLISH" : "WAITING_FOR_VIDEO" } 
-                  } 
+                posts: {
+                  updateMany: {
+                    where: {},
+                    data: { status: isVideo ? "READY_TO_PUBLISH" : "WAITING_FOR_VIDEO" }
+                  }
                 }
               }
             });
@@ -105,16 +106,39 @@ export const startVideoGenerationCron = schedules.task({
         mediaUrl: { not: null },
         videoUrl: null,
         videoTaskId: null,
-        posts: { some: { status: "WAITING_FOR_VIDEO" } }
+        posts: { 
+          some: { 
+            status: { in: ["WAITING_FOR_VIDEO", "WAITING_FOR_MEDIA"] } 
+          } 
+        }
       }
     });
 
-    if (!item) return;
+    if (!item) {
+      logger.info("Pipeline: No pending items found for video generation.");
+      return;
+    }
 
     try {
+      let videoPrompt = item.videoRequirement || item.hook || "Cinematic transition";
+      
+      // Attempt to parse JSON storyboard if present
+      if (videoPrompt.startsWith("[") || videoPrompt.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(videoPrompt);
+          if (Array.isArray(parsed)) {
+            videoPrompt = parsed.map((p: any) => p.description || p.scene || p.action || JSON.stringify(p)).join(". ");
+          } else if (typeof parsed === 'object') {
+            videoPrompt = parsed.storyboard || parsed.prompt || videoPrompt;
+          }
+        } catch (e) {
+          logger.warn(`Failed to parse videoRequirement for ${item.id}, using raw string.`);
+        }
+      }
+
       const videoTask = await kieaiService.createVideoFromImage(
         item.mediaUrl!,
-        item.storyboard || item.hook || "Cinematic transition"
+        videoPrompt
       );
 
       if (videoTask?.taskId) {
@@ -122,7 +146,7 @@ export const startVideoGenerationCron = schedules.task({
           where: { id: item.id },
           data: {
             videoTaskId: videoTask.taskId,
-            posts: { updateMany: { data: { status: "GENERATING_VIDEO" } } }
+            posts: { updateMany: { where: {}, data: { status: "GENERATING_VIDEO" } } }
           }
         });
         logger.info(`Pipeline: Started Video for ${item.id}`, { taskId: videoTask.taskId });

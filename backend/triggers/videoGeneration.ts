@@ -70,6 +70,7 @@ export const generateVideoTask = task({
               mediaUrl: videoUrl, // Final video URL
               posts: {
                 updateMany: {
+                  where: {},
                   data: { status: "READY_TO_PUBLISH" }
                 }
               }

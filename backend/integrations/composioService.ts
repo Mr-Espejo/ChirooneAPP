@@ -1,18 +1,21 @@
+import { ComposioToolSet } from "composio-core";
+import { google } from "googleapis";
+
 export class ComposioService {
   private ig = {
-    accountId: "0b6c39bd-3100-4b5c-9aa0-d2976fb532b5",
-    userId: "17841466819125136",
+    accountId: process.env.COMPOSIO_IG_ACCOUNT_ID || "0b6c39bd-3100-4b5c-9aa0-d2976fb532b5",
+    userId: process.env.COMPOSIO_IG_USER_ID || "17841466819125136",
   };
 
   private fb = {
-    pageId: "343192448887259",
+    pageId: process.env.FB_PAGE_ID || "343192448887259",
     pageAccessToken: process.env.FB_PAGE_ACCESS_TOKEN || "",
   };
 
   private yt = {
     clientId: process.env.YOUTUBE_CLIENT_ID || "",
     clientSecret: process.env.YOUTUBE_CLIENT_SECRET || "",
-    refreshToken: process.env.YOUTUBE_REFRESH_TOKEN || "", 
+    refreshToken: process.env.YOUTUBE_REFRESH_TOKEN || "",
   };
 
   private tt = {
@@ -24,7 +27,6 @@ export class ComposioService {
 
   private async getToolset(): Promise<any> {
     if (!this._toolset) {
-      const { ComposioToolSet } = await import("composio-core");
       this._toolset = new ComposioToolSet({
         apiKey: process.env.COMPOSIO_API_KEY || "",
       });
@@ -33,14 +35,10 @@ export class ComposioService {
   }
 
   private async getGoogle(): Promise<any> {
-    if (!this._google) {
-      const { google } = await import("googleapis");
-      this._google = google;
-    }
-    return this._google;
+    return google;
   }
 
-  constructor() {}
+  constructor() { }
 
   async publishMedia(
     mediaUrl: string,
@@ -63,27 +61,24 @@ export class ComposioService {
 
   private async publishToFacebook(mediaUrl: string, description: string, title?: string): Promise<PublishResult> {
     const isVideo = /\.(mp4|mov|avi|webm)(\?|$)/i.test(mediaUrl);
-    const endpoint = isVideo
-      ? `https://graph.facebook.com/v20.0/${this.fb.pageId}/videos`
-      : `https://graph.facebook.com/v20.0/${this.fb.pageId}/photos`;
+    
+    console.log("[Facebook] Publishing via Composio...");
+    const toolset = await this.getToolset();
+    const res: any = await toolset.executeAction({
+      actionName: isVideo ? "FACEBOOK_CREATE_VIDEO_POST" : "FACEBOOK_CREATE_PHOTO_POST",
+      params: {
+        page_id: this.fb.pageId,
+        ...(isVideo 
+          ? { video_url: mediaUrl, description: description, title: title }
+          : { url: mediaUrl, caption: description })
+      },
+      connectedAccountId: this.ig.accountId, // Usamos la misma conexión de Meta si están vinculadas
+    });
 
-    const body = new URLSearchParams({ description, published: "true", access_token: this.fb.pageAccessToken });
+    if (!res.successful) throw new Error(`[Facebook] Publish failed: ${res.error}`);
 
-    if (isVideo) {
-      body.set("file_url", mediaUrl);
-      if (title) body.set("title", title);
-    } else {
-      body.set("url", mediaUrl);
-      body.set("caption", description);
-    }
-
-    const res = await fetch(endpoint, { method: "POST", body });
-    const json = (await res.json()) as { id?: string; error?: { message: string } };
-
-    if (!res.ok || json.error) throw new Error(`[Facebook] ${json.error?.message ?? `HTTP ${res.status}`}`);
-
-    console.log(`[Facebook] Published. ID: ${json.id}`);
-    return { success: true, platform: "facebook", id: json.id };
+    console.log(`[Facebook] Published successfully.`);
+    return { success: true, platform: "facebook", id: res.data.id || "SUCCESS" };
   }
 
   private async publishToInstagram(mediaUrl: string, caption: string, coverUrl?: string): Promise<PublishResult> {
@@ -164,7 +159,7 @@ export class ComposioService {
       this.yt.clientSecret
     );
     oauth2Client.setCredentials({ refresh_token: this.yt.refreshToken });
-    
+
     const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
     console.log("[YouTube] Step 2: Iniciando stream desde origen...");
@@ -173,28 +168,28 @@ export class ComposioService {
     const contentLength = vidRes.headers.get("content-length");
 
     console.log(`[YouTube] Step 3: Iniciando subida (${contentLength} bytes)...`);
-    
+
     const res = await youtube.videos.insert({
-        part: ['snippet', 'status'],
-        requestBody: {
-            snippet: {
-                title: title || "ChiroOne Short",
-                description: description,
-                tags: tags || ['chiropractor', 'goldcoast', 'health'],
-                categoryId: '22'
-            },
-            status: {
-                privacyStatus: 'private',
-                selfDeclaredMadeForKids: false
-            }
+      part: ['snippet', 'status'],
+      requestBody: {
+        snippet: {
+          title: title || "ChiroOne Short",
+          description: description,
+          tags: tags || ['chiropractor', 'goldcoast', 'health'],
+          categoryId: '22'
         },
-        media: {
-            body: vidRes.body // Direct stream
+        status: {
+          privacyStatus: 'private',
+          selfDeclaredMadeForKids: false
         }
+      },
+      media: {
+        body: vidRes.body // Direct stream
+      }
     });
 
     if (!res.data.id) {
-       throw new Error(`[YouTube] Falló la subida. Respuesta anómala de Google.`);
+      throw new Error(`[YouTube] Falló la subida. Respuesta anómala de Google.`);
     }
 
     console.log(`[YouTube] Publicado. ID: ${res.data.id}`);
@@ -237,7 +232,7 @@ export class ComposioService {
 
     const initData = await initRes.json();
     if (initData.error?.code !== "ok" || !initData.data?.upload_url) {
-        throw new Error(`[TikTok] Error de inicio: ${JSON.stringify(initData)}`);
+      throw new Error(`[TikTok] Error de inicio: ${JSON.stringify(initData)}`);
     }
 
     const publishId = initData.data.publish_id;
@@ -247,18 +242,18 @@ export class ComposioService {
     const uploadRequest = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
-          "Content-Type": "video/mp4",
-          "Content-Length": fileSize.toString(),
-          "Content-Range": `bytes 0-${fileSize - 1}/${fileSize}`
+        "Content-Type": "video/mp4",
+        "Content-Length": fileSize.toString(),
+        "Content-Range": `bytes 0-${fileSize - 1}/${fileSize}`
       },
       body: vidRes.body // Direct stream from fetch
     });
 
     if (uploadRequest.status >= 200 && uploadRequest.status < 300) {
-        console.log(`[TikTok] ✅ Archivo subido con éxito. ID: ${publishId}`);
-        return { success: true, platform: "tiktok", id: publishId };
+      console.log(`[TikTok] ✅ Archivo subido con éxito. ID: ${publishId}`);
+      return { success: true, platform: "tiktok", id: publishId };
     } else {
-        throw new Error(`[TikTok] ❌ Falló la subida final HTTP ${uploadRequest.status}`);
+      throw new Error(`[TikTok] ❌ Falló la subida final HTTP ${uploadRequest.status}`);
     }
   }
 }
