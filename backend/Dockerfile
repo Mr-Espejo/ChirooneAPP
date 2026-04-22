@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y openssl python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 COPY backend/package*.json ./
+COPY backend/prisma ./prisma/
 RUN npm install
 
 COPY backend/ ./
