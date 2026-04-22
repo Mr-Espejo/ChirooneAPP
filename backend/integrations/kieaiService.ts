@@ -21,7 +21,7 @@ export class KieaiService {
           webhookUrl: process.env.WEBHOOK_URL || "https://tu-api.com/webhook/kieai",
           input: {
             image_urls: [imageUrl],
-            prompt: `${prompt}. Professional chiropractic aesthetic. High quality 4k.`,
+            prompt: `${prompt}. Professional chiropractic aesthetic. High quality 4k. STRICTLY NO TEXT, NO TYPOGRAPHY, NO LETTERS, NO WORDS anywhere in the video.`,
             mode: "normal",
             duration: "30",
             resolution: "720p",

@@ -10,9 +10,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export class BlitzCreativeWeekUseCase {
   async execute(companyId: string, brandDna: any, options?: { dryRun?: boolean }) {
-    const blitzPromptPath = path.join(__dirname, "../../../ai-context/blitzPrompt.md");
+    const path1 = path.join(__dirname, "../../../ai-context/blitzPrompt.md");
+    const path2 = path.join(__dirname, "../../ai-context/blitzPrompt.md");
+    const path3 = path.join(process.cwd(), "../ai-context/blitzPrompt.md");
+    
+    let blitzPromptPath = path1;
+    if (fs.existsSync(path2)) blitzPromptPath = path2;
+    else if (fs.existsSync(path3)) blitzPromptPath = path3;
+
     if (!fs.existsSync(blitzPromptPath)) {
-      throw new Error(`Blitz prompt file not found at ${blitzPromptPath}`);
+      throw new Error(`Blitz prompt file not found in any path (e.g. ${path1}, ${path3})`);
     }
 
     const basePrompt = fs.readFileSync(blitzPromptPath, "utf-8");

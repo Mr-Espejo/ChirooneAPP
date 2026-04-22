@@ -8,6 +8,7 @@ export default defineConfig({
   dirs: ["triggers"],
   maxDuration: 300, 
   build: {
+    additionalFiles: ["../ai-context/**/*"],
     extensions: [
       prismaExtension({
         mode: "legacy",

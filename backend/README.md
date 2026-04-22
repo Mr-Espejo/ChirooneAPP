@@ -55,3 +55,43 @@ El sistema cuenta con las siguientes tareas programadas:
 - `/triggers`: Definición de tareas para Trigger.dev.
 - `/integrations`: Servicios externos (Composio, Kie.ai, etc.).
 - `/utils`: Clientes globales (Prisma, LLM).
+
+---
+
+## 🚀 Despliegue en VPS (Producción)
+
+Para subir cambios desde tu entorno local al servidor de producción, sigue estos pasos:
+
+### 1. Sube los cambios desde tu PC
+En tu computadora local, guarda y sube tus cambios a GitHub:
+```bash
+git add .
+git commit -m "Descripción de los cambios"
+git push origin main
+```
+
+### 2. Descarga los cambios en el VPS
+Conéctate por SSH a tu servidor, navega a la carpeta del proyecto y ejecuta:
+
+```bash
+# Paso 1: Elimina temporalmente tus modificaciones locales en package.json (si las hay)
+git checkout HEAD -- package.json backend/package.json
+
+# Paso 2: Trae la actualización de GitHub limpiamente
+git pull origin main
+```
+*(Si tienes cambios propios en el servidor en otros archivos como `docker-compose.yml`, usa `git stash`, luego `git pull`, y después `git stash pop` para mantenerlos).*
+
+### 3. Reconstruye y levanta el servidor
+Como usamos Docker, debes reconstruir la imagen del backend para que tome los nuevos archivos:
+```bash
+docker compose build chiroone-backend
+docker compose up -d chiroone-backend
+```
+*(El flag `-d` significa "detached", para que corra en segundo plano).*
+
+### 4. Despliega los Triggers (Obligatorio)
+Si cambiaste lógica dentro de la carpeta `backend/triggers/` (cron jobs, concurrencia, etc.), **debes** enviarlos a la nube de Trigger.dev. Estando en la carpeta `backend/`, ejecuta:
+```bash
+npx trigger.dev deploy
+```

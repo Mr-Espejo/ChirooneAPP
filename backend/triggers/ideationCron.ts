@@ -13,7 +13,6 @@ export const weeklyIdeationTask = schedules.task({
   run: async (payload, io, ctx) => {
     console.log("[Trigger] Running Weekly Ideation Task...");
     
-    // Load brand DNA
     const path1 = path.join(__dirname, "../../../ai-context/brandDna.json"); // if in dist/triggers
     const path2 = path.join(__dirname, "../../ai-context/brandDna.json"); // if in src/triggers or via tsx
     const path3 = path.join(process.cwd(), "../ai-context/brandDna.json"); // relative to backend process
