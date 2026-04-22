@@ -7,7 +7,7 @@ const API_KEY = process.env.KIEAI_API_KEY;
 export const generateVideoTask = task({
   id: "generate-video-task",
   maxDuration: 600, 
-  concurrencyLimit: 1, 
+  concurrencyLimit: 5, 
   run: async (payload: { postId: string; imageUrl: string; prompt: string; companyId: string }) => {
     const { postId, imageUrl, prompt, companyId } = payload;
     
@@ -19,6 +19,7 @@ export const generateVideoTask = task({
       },
       body: JSON.stringify({
         model: "grok-imagine/image-to-video",
+        webhookUrl: process.env.WEBHOOK_URL || "https://tu-api.com/webhook/kieai",
         input: {
           image_urls: [imageUrl],
           prompt: prompt,
@@ -42,48 +43,16 @@ export const generateVideoTask = task({
     }
 
     const taskId = result.data.taskId;
-    console.log(`[Video] Task created: ${taskId}`);
+    console.log(`[Video] Task created: ${taskId}. Delegating completion to Webhook.`);
 
-    let isCompleted = false;
-    let attempts = 0;
-
-    while (!isCompleted && attempts < 30) {
-      attempts++;
-      await wait.for({ seconds: 40 });
-
-      const statusResp = await fetch(`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${taskId}`, {
-        headers: { 
-          "Authorization": `Bearer ${API_KEY}`
-        }
-      });
-      const statusData = await statusResp.json() as any;
-      const status = (statusData.data?.status || statusData.msg || "").toUpperCase();
-
-      if (status === "SUCCESS" || status === "COMPLETED") {
-        const videoUrl = statusData.data?.videos?.[0]?.url || statusData.data?.url || statusData.data?.videoUrl;
-        if (videoUrl) {
-          console.log(`[Video] SUCCESS! URL: ${videoUrl}`);
-          
-          await prisma.contentItem.update({
-            where: { id: postId },
-            data: {
-              mediaUrl: videoUrl, // Final video URL
-              posts: {
-                updateMany: {
-                  where: {},
-                  data: { status: "READY_TO_PUBLISH" }
-                }
-              }
-            }
-          });
-          
-          isCompleted = true;
-          return { success: true, videoUrl };
-        }
+    await prisma.contentItem.update({
+      where: { id: postId },
+      data: {
+        videoTaskId: taskId,
+        posts: { updateMany: { where: {}, data: { status: "GENERATING_VIDEO" } } }
       }
-      console.log(`[Video] Status: ${status} (Attempt ${attempts}/30)`);
-    }
+    });
 
-    throw new Error(`Video task ${taskId} timed out.`);
+    return { success: true, taskId, message: "Task delegated to Webhook" };
   },
 });

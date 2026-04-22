@@ -1,6 +1,6 @@
 # AI Context Status: Full Automation (Ideation -> Generate -> Publish)
 
-## Current Status (Last Update: April 11, 2026)
+## Current Status (Last Update: April 22, 2026)
 The system is fully integrated from content ideation (LLM) through media generation (Images to Video) into multi-platform publishing (Composio).
 
 ### End-to-End Orchestration Flow 🔄
@@ -8,7 +8,7 @@ The system is fully integrated from content ideation (LLM) through media generat
 1. **Ideation (`BlitzCreativeWeekUseCase`)**:
    - Merges `brandDna.json` with `blitzPrompt.md`.
    - Sends the context to the LLM to generate a weekly strategy.
-   - Saves `ContentPlan` and related `ContentItem` schedules and `Post`s in SQLite (`Prisma`), setting posts to `WAITING_FOR_MEDIA`.
+   - Saves `ContentPlan` and related `ContentItem` schedules and `Post`s in PostgreSQL (Supabase) via Prisma, setting posts to `WAITING_FOR_MEDIA`.
    
 2. **Image Generation (`MediaService` & `pollMediaTask`)**:
    - Submits prompts to Kie.ai (Nano Banana 2) for base image creation.
@@ -26,7 +26,7 @@ The system is fully integrated from content ideation (LLM) through media generat
    - Updates posts to `PUBLISHED` on success, marking the cycle complete.
 
 ### Achievements ✅
-- **Database Migration**: Fully transitioned to **Prisma (SQLite)**.
+- **Database Migration**: Fully transitioned to **Prisma (PostgreSQL/Supabase)**.
 - **Media Pipeline Complete**: Integrated both Image and Video generation loops properly chained via Trigger.dev.
 - **Publishing Pipeline**: Implemented `PublishingService` using **Composio SDK**.
 - **Social Integration**: Connected profiles for major social platforms (Instagram `ca_-LV2OFhUvAZe`, Facebook `ca_cntM_pYIpPay`, TikTok, etc.).
@@ -36,7 +36,7 @@ The system is fully integrated from content ideation (LLM) through media generat
 - **Frontend Dashboard**: (Next Milestone) Create a UI to monitor post status and manually trigger generation/publishing.
 
 ### Infrastructure Info 🛠️
-- **Database**: Prisma v7.7.0 (SQLite)
+- **Database**: Prisma v7.7.0 (PostgreSQL on Supabase)
 - **Publishing**: Composio (Instagram, TikTok, Facebook, YouTube)
 - **AI Models**: Grok Imagine (Video) / Nano Banana 2 (Image) / Gemini/OpenAI (Strategy)
 - **Orchestration**: Trigger.dev v3 & Express.js

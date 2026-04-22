@@ -19,6 +19,7 @@ export class MediaService {
         },
         body: JSON.stringify({
           model: "nano-banana-2",
+          webhookUrl: process.env.WEBHOOK_URL || "https://tu-api.com/webhook/kieai",
           input: {
             prompt: `${prompt}. Please ensure the brand logo from the reference image is placed naturally in the scene (e.g. on a wall, sign, or item).`,
             image_input: [this.logoUrl],

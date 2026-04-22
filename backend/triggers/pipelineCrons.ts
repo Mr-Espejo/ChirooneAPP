@@ -101,7 +101,7 @@ export const startVideoGenerationCron = schedules.task({
     const { prisma } = await import("../utils/prisma.ts");
     const { kieaiService } = await import("../integrations/kieaiService.ts");
 
-    const item = await prisma.contentItem.findFirst({
+    const items = await prisma.contentItem.findMany({
       where: {
         mediaUrl: { not: null },
         videoUrl: null,
@@ -111,51 +111,54 @@ export const startVideoGenerationCron = schedules.task({
             status: { in: ["WAITING_FOR_VIDEO", "WAITING_FOR_MEDIA"] } 
           } 
         }
-      }
+      },
+      take: 5
     });
 
-    if (!item) {
+    if (items.length === 0) {
       logger.info("Pipeline: No pending items found for video generation.");
       return;
     }
 
-    try {
-      let videoPrompt = item.videoRequirement || item.hook || "Cinematic transition";
-      
-      // Attempt to parse JSON storyboard if present
-      if (videoPrompt.startsWith("[") || videoPrompt.startsWith("{")) {
-        try {
-          const parsed = JSON.parse(videoPrompt);
-          if (Array.isArray(parsed)) {
-            videoPrompt = parsed.map((p: any) => p.description || p.scene || p.action || JSON.stringify(p)).join(". ");
-          } else if (typeof parsed === 'object') {
-            videoPrompt = parsed.storyboard || parsed.prompt || videoPrompt;
+    await Promise.all(items.map(async (item) => {
+      try {
+        let videoPrompt = item.videoRequirement || item.hook || "Cinematic transition";
+        
+        // Attempt to parse JSON storyboard if present
+        if (videoPrompt.startsWith("[") || videoPrompt.startsWith("{")) {
+          try {
+            const parsed = JSON.parse(videoPrompt);
+            if (Array.isArray(parsed)) {
+              videoPrompt = parsed.map((p: any) => p.description || p.scene || p.action || JSON.stringify(p)).join(". ");
+            } else if (typeof parsed === 'object') {
+              videoPrompt = parsed.storyboard || parsed.prompt || videoPrompt;
+            }
+          } catch (e) {
+            logger.warn(`Failed to parse videoRequirement for ${item.id}, using raw string.`);
           }
-        } catch (e) {
-          logger.warn(`Failed to parse videoRequirement for ${item.id}, using raw string.`);
         }
-      }
 
-      const videoTask = await kieaiService.createVideoFromImage(
-        item.mediaUrl!,
-        videoPrompt
-      );
+        const videoTask = await kieaiService.createVideoFromImage(
+          item.mediaUrl!,
+          videoPrompt
+        );
 
-      if (videoTask?.taskId) {
-        await prisma.contentItem.update({
-          where: { id: item.id },
-          data: {
-            videoTaskId: videoTask.taskId,
-            posts: { updateMany: { where: {}, data: { status: "GENERATING_VIDEO" } } }
-          }
-        });
-        logger.info(`Pipeline: Started Video for ${item.id}`, { taskId: videoTask.taskId });
-      } else {
-        logger.warn(`Pipeline: No taskId returned for ${item.id}`, { videoTask });
+        if (videoTask?.taskId) {
+          await prisma.contentItem.update({
+            where: { id: item.id },
+            data: {
+              videoTaskId: videoTask.taskId,
+              posts: { updateMany: { where: {}, data: { status: "GENERATING_VIDEO" } } }
+            }
+          });
+          logger.info(`Pipeline: Started Video for ${item.id}`, { taskId: videoTask.taskId });
+        } else {
+          logger.warn(`Pipeline: No taskId returned for ${item.id}`, { videoTask });
+        }
+      } catch (e) {
+        logger.error(`Pipeline: Video Generation Trigger Failed for ${item.id}`, { error: (e as any).message });
       }
-    } catch (e) {
-      logger.error(`Pipeline: Video Generation Trigger Failed for ${item.id}`, { error: (e as any).message });
-    }
+    }));
   }
 });
 

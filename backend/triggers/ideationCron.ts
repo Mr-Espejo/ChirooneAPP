@@ -14,9 +14,17 @@ export const weeklyIdeationTask = schedules.task({
     console.log("[Trigger] Running Weekly Ideation Task...");
     
     // Load brand DNA
-    const brandDnaPath = path.join(__dirname, "../../../ai-context/brandDna.json");
+    const path1 = path.join(__dirname, "../../../ai-context/brandDna.json"); // if in dist/triggers
+    const path2 = path.join(__dirname, "../../ai-context/brandDna.json"); // if in src/triggers or via tsx
+    const path3 = path.join(process.cwd(), "../ai-context/brandDna.json"); // relative to backend process
+
+    let brandDnaPath = path1;
+    if (fs.existsSync(path2)) brandDnaPath = path2;
+    else if (fs.existsSync(path3)) brandDnaPath = path3;
+
     if (!fs.existsSync(brandDnaPath)) {
-      throw new Error("brandDna.json not found");
+      console.error(`[Trigger] brandDna.json not found in paths: ${path1}, ${path2}, ${path3}`);
+      throw new Error(`brandDna.json not found`);
     }
     const brandDna = JSON.parse(fs.readFileSync(brandDnaPath, "utf-8"));
     

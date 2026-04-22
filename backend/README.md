@@ -8,7 +8,7 @@ Full-stack social media orchestration system with AI-driven ideation, blueprinti
 Asegúrate de tener un archivo `.env` en esta carpeta con las siguientes llaves:
 - `TRIGGER_API_KEY`: Tu API Key de Trigger.dev.
 - `KIEAI_API_KEY`: Para la generación de imágenes y videos.
-- `DATABASE_URL`: URL de conexión para SQLite/PostgreSQL.
+- `DATABASE_URL`: URL de conexión para PostgreSQL (Supabase).
 
 ### 2. Iniciar el servidor de Express
 Este servidor maneja los webhooks y las rutas manuales para disparar procesos.

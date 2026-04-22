@@ -53,27 +53,67 @@ app.get("/health", (req, res) => {
 });
 
 
-app.post("/webhook/media/:id", async (req, res) => {
-  const { id } = req.params;
+app.post("/webhook/kieai", async (req, res) => {
   const payload = req.body;
-  
-  console.log(`[Webhook] Media result for ${id}:`, payload.status);
+  const signature = req.headers["x-kieai-signature"] || req.headers["authorization"];
+
+  console.log(`[Webhook] Received from Kie.ai:`, payload.taskId, payload.status);
 
   if (payload.status === "SUCCESS" || payload.status === "COMPLETED") {
-    const imageUrl = payload.data?.images?.[0]?.url || payload.data?.url;
-    if (imageUrl) {
-      await prisma.contentItem.update({
-        where: { id },
-        data: { mediaUrl: imageUrl }
-      });
+    // Determine if it's an image or video based on the payload structure
+    const imageUrl = payload.data?.images?.[0]?.url || (payload.data?.url && !payload.data?.url.match(/\.(mp4|mov)$/i)) ? payload.data?.url : null;
+    const videoUrl = payload.data?.videos?.[0]?.url || (payload.data?.url && payload.data?.url.match(/\.(mp4|mov)$/i)) ? payload.data?.url : null;
 
-      await prisma.post.updateMany({
-        where: { contentItemId: id },
-        data: { status: "READY_TO_PUBLISH" }
-      });
-      
-      console.log(`[Webhook] ContentItem ${id} and related posts updated with media URL.`);
+    try {
+      if (imageUrl) {
+        // It's an Image task
+        const item = await prisma.contentItem.findFirst({ where: { imageTaskId: payload.taskId } });
+        if (item) {
+          await prisma.contentItem.update({
+            where: { id: item.id },
+            data: { mediaUrl: imageUrl, imageTaskId: null, posts: { updateMany: { where: {}, data: { status: "WAITING_FOR_VIDEO" } } } }
+          });
+          console.log(`[Webhook] Image updated for item ${item.id}`);
+
+          // EVENT-DRIVEN: Trigger video generation immediately!
+          try {
+            const { kieaiService } = await import("./modules/generation/kieaiService.js").catch(() => import("./integrations/kieaiService.js"));
+            let videoPrompt = item.videoRequirement || item.hook || "Cinematic transition";
+            if (videoPrompt.startsWith("[") || videoPrompt.startsWith("{")) {
+              try {
+                const parsed = JSON.parse(videoPrompt);
+                videoPrompt = Array.isArray(parsed) ? parsed.map((p: any) => p.description || JSON.stringify(p)).join(". ") : (parsed.storyboard || videoPrompt);
+              } catch (e) {}
+            }
+            
+            const videoTask = await kieaiService.createVideoFromImage(imageUrl, videoPrompt);
+            if (videoTask?.taskId) {
+               await prisma.contentItem.update({
+                 where: { id: item.id },
+                 data: { videoTaskId: videoTask.taskId, posts: { updateMany: { where: {}, data: { status: "GENERATING_VIDEO" } } } }
+               });
+               console.log(`[Webhook] Fast-tracked video generation for ${item.id}, Task ID: ${videoTask.taskId}`);
+            }
+          } catch(err) {
+            console.error(`[Webhook] Failed to fast-track video:`, err);
+          }
+        }
+      } else if (videoUrl) {
+        // It's a Video task
+        const item = await prisma.contentItem.findFirst({ where: { videoTaskId: payload.taskId } });
+        if (item) {
+          await prisma.contentItem.update({
+            where: { id: item.id },
+            data: { videoUrl: videoUrl, videoTaskId: null, posts: { updateMany: { where: {}, data: { status: "READY_TO_PUBLISH" } } } }
+          });
+          console.log(`[Webhook] Video updated for item ${item.id}`);
+        }
+      }
+    } catch (e) {
+      console.error("[Webhook] Database error:", e);
     }
+  } else if (payload.status === "FAILED") {
+      console.error(`[Webhook] Task ${payload.taskId} failed:`, payload.msg);
   }
   
   res.json({ received: true });

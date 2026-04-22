@@ -18,6 +18,7 @@ export class KieaiService {
         },
         body: JSON.stringify({
           model: "grok-imagine/image-to-video",
+          webhookUrl: process.env.WEBHOOK_URL || "https://tu-api.com/webhook/kieai",
           input: {
             image_urls: [imageUrl],
             prompt: `${prompt}. Professional chiropractic aesthetic. High quality 4k.`,
