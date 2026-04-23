@@ -1,26 +1,12 @@
 import { prisma } from "../../utils/prisma.js";
 import { llmService } from "../../utils/llm.js";
 import { mediaService } from "../generation/media.service.js";
+import { getAiContextPath } from "../../utils/paths.js";
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { pollMediaTask } from "../../triggers/mediaPolling.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export class BlitzCreativeWeekUseCase {
   async execute(companyId: string, brandDna: any, options?: { dryRun?: boolean }) {
-    const path1 = path.join(__dirname, "../../../ai-context/blitzPrompt.md");
-    const path2 = path.join(__dirname, "../../ai-context/blitzPrompt.md");
-    const path3 = path.join(process.cwd(), "../ai-context/blitzPrompt.md");
-    
-    let blitzPromptPath = path1;
-    if (fs.existsSync(path2)) blitzPromptPath = path2;
-    else if (fs.existsSync(path3)) blitzPromptPath = path3;
-
-    if (!fs.existsSync(blitzPromptPath)) {
-      throw new Error(`Blitz prompt file not found in any path (e.g. ${path1}, ${path3})`);
-    }
+    const blitzPromptPath = getAiContextPath("blitzPrompt.md");
 
     const basePrompt = fs.readFileSync(blitzPromptPath, "utf-8");
     const promptTemplate = basePrompt.replace("{{brandDna}}", JSON.stringify(brandDna));

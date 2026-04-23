@@ -86,7 +86,7 @@ git pull origin main
 Como usamos Docker, debes reconstruir la imagen del backend para que tome los nuevos archivos:
 ```bash
 docker compose build chiroone-backend
-docker compose up -d chiroone-backend
+docker compose up -d chiroone-backend / frontend
 ```
 *(El flag `-d` significa "detached", para que corra en segundo plano).*
 
