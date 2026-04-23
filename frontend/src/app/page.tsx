@@ -441,6 +441,7 @@ function SkeletonCard() {
 }
 
 function DetailsModal({ creative, onClose }: { creative: Creative, onClose: () => void }) {
+  const [isSyncing, setIsSyncing] = useState(false);
   const mediaUrl = creative.mediaUrl || "";
   const videoUrl = creative.videoUrl || "";
   const isVideo = !!videoUrl || (
@@ -451,6 +452,21 @@ function DetailsModal({ creative, onClose }: { creative: Creative, onClose: () =
 
   const displayVideoUrl = videoUrl || (isVideo ? mediaUrl : "");
   const displayImageUrl = isVideo ? "" : mediaUrl;
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3009";
+      const res = await fetch(`${apiUrl}/publish?itemId=${creative.id}`);
+      if (!res.ok) throw new Error("Sync failed");
+      alert("Sincronización manual ejecutada con éxito. Actualizando vista...");
+      window.location.reload();
+    } catch (e) {
+      alert("Error al intentar sincronizar.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -592,8 +608,16 @@ function DetailsModal({ creative, onClose }: { creative: Creative, onClose: () =
           </div>
 
           <div className="mt-12 flex gap-4 pt-10 border-t border-[#001A57]/5">
-            <button className="flex-grow py-5 chiro-gradient text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#1A73E8]/20 hover:scale-[1.02] transition-all">
-               Sync to Platforms
+            <button 
+              onClick={handleSync}
+              disabled={isSyncing}
+              className={`flex-grow py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-all ${
+                isSyncing 
+                  ? "bg-[#E5E7EB] text-[#001A57]/50 cursor-not-allowed" 
+                  : "chiro-gradient text-white shadow-[#1A73E8]/20"
+              }`}
+            >
+               {isSyncing ? "Syncing..." : "Sync to Platforms"}
             </button>
             <button className="px-8 py-5 bg-[#F3F4F6] text-[#001A57] rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-[#E5E7EB] transition-all">
                Edit

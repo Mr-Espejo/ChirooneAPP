@@ -2,14 +2,18 @@ import { prisma } from "../../utils/prisma.js";
 import { composioService } from "../../integrations/composioService.js";
 
 export class PublishingService {
-  async publishPendingPosts(options: { dryRun?: boolean } = {}) {
+  async publishPendingPosts(options: { dryRun?: boolean; itemId?: string } = {}) {
     const pendingPosts = await prisma.post.findMany({
       where: {
-        status: "READY_TO_PUBLISH",
-        OR: [
-          { publishedAt: null },
-          { publishedAt: { lte: new Date() } }
-        ]
+        status: options.itemId ? { in: ["READY_TO_PUBLISH", "FAILED"] } : "READY_TO_PUBLISH",
+        ...(options.itemId ? { contentItemId: options.itemId } : {}),
+        // Si es un override manual (itemId provisto), ignoramos la fecha de schedule
+        ...(options.itemId ? {} : {
+          OR: [
+            { publishedAt: null },
+            { publishedAt: { lte: new Date() } }
+          ]
+        })
       },
       include: {
         contentItem: true

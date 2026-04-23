@@ -9,10 +9,8 @@ import { BlitzCreativeWeekUseCase } from "./modules/ideation/blitzCreativeWeek.u
 
 import { prisma } from "./utils/prisma.js";
 
-import { getAiContextPath } from "./utils/paths.js";
+import brandDna from "./ai-context/brandDna.json" with { type: "json" };
 
-const brandDnaPath = getAiContextPath("brandDna.json");
-const brandDna = JSON.parse(fs.readFileSync(brandDnaPath, "utf-8"));
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -138,12 +136,26 @@ app.post("/api/trigger", express.raw({ type: "application/json" }), (req, res) =
 });
 
 import { publishingService } from "./modules/publishing/publishing.service.js";
+import { syncMediaTaskLogic, startVideoGenerationTaskLogic } from "./triggers/pipelineCrons.js";
 
 app.get("/publish", async (req, res) => {
   try {
-    const results = await publishingService.publishPendingPosts();
-    res.json(results);
+    const itemId = req.query.itemId as string | undefined;
+    console.log(`[Backend] Manual Pipeline Triggered... ${itemId ? `(Item ID: ${itemId})` : '(All)'}`);
+    
+    console.log("[Backend] 1. Syncing Media...");
+    await syncMediaTaskLogic(itemId);
+    
+    console.log("[Backend] 2. Starting Video Generation...");
+    await startVideoGenerationTaskLogic(itemId);
+    
+    console.log("[Backend] 3. Publishing Pending Posts...");
+    const results = await publishingService.publishPendingPosts({ itemId });
+    
+    console.log("[Backend] Manual Pipeline Finished!");
+    res.json({ success: true, message: "Full pipeline executed", results });
   } catch (error) {
+    console.error("[Backend] Error executing manual pipeline:", error);
     res.status(500).json({ error: (error as Error).message });
   }
 });

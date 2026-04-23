@@ -1,14 +1,10 @@
 import { prisma } from "../../utils/prisma.js";
 import { llmService } from "../../utils/llm.js";
 import { mediaService } from "../generation/media.service.js";
-import { getAiContextPath } from "../../utils/paths.js";
-import fs from "node:fs";
+import { blitzPrompt as basePrompt } from "../../ai-context/blitzPrompt.js";
 
 export class BlitzCreativeWeekUseCase {
   async execute(companyId: string, brandDna: any, options?: { dryRun?: boolean }) {
-    const blitzPromptPath = getAiContextPath("blitzPrompt.md");
-
-    const basePrompt = fs.readFileSync(blitzPromptPath, "utf-8");
     const promptTemplate = basePrompt.replace("{{brandDna}}", JSON.stringify(brandDna));
 
     console.log("[UseCase] Generating content strategy for company:", companyId, options?.dryRun ? "(DRY RUN)" : "");

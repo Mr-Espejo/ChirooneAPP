@@ -1,5 +1,6 @@
 import { ComposioToolSet } from "composio-core";
 import { google } from "googleapis";
+import { Readable } from "node:stream";
 
 export class ComposioService {
   private ig = {
@@ -69,7 +70,7 @@ export class ComposioService {
       params: {
         page_id: this.fb.pageId,
         ...(isVideo 
-          ? { video_url: mediaUrl, description: description, title: title }
+          ? { file_url: mediaUrl, description: description, title: title }
           : { url: mediaUrl, caption: description })
       },
       connectedAccountId: this.ig.accountId, // Usamos la misma conexión de Meta si están vinculadas
@@ -166,6 +167,8 @@ export class ComposioService {
     const vidRes = await fetch(mediaUrl);
     if (!vidRes.body) throw new Error("[YouTube] Falló la descarga del video.");
     const contentLength = vidRes.headers.get("content-length");
+    const arrayBuffer = await vidRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
     console.log(`[YouTube] Step 3: Iniciando subida (${contentLength} bytes)...`);
 
@@ -184,7 +187,7 @@ export class ComposioService {
         }
       },
       media: {
-        body: vidRes.body // Direct stream
+        body: Readable.from(buffer)
       }
     });
 
@@ -238,6 +241,9 @@ export class ComposioService {
     const publishId = initData.data.publish_id;
     const uploadUrl = initData.data.upload_url;
 
+    const arrayBuffer = await vidRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
     console.log(`[TikTok] Step 3: URL generada. Transmitiendo archivo (${fileSize} bytes)...`);
     const uploadRequest = await fetch(uploadUrl, {
       method: "PUT",
@@ -246,7 +252,7 @@ export class ComposioService {
         "Content-Length": fileSize.toString(),
         "Content-Range": `bytes 0-${fileSize - 1}/${fileSize}`
       },
-      body: vidRes.body // Direct stream from fetch
+      body: buffer // ArrayBuffer/Buffer
     });
 
     if (uploadRequest.status >= 200 && uploadRequest.status < 300) {
