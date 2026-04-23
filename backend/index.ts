@@ -27,10 +27,22 @@ app.get("/api/creatives", async (req, res) => {
     const creatives = await prisma.contentItem.findMany({
       include: {
         posts: true,
+        plan: {
+          select: {
+            generatedAt: true,
+          },
+        },
       },
-      orderBy: {
-        day: "asc",
-      },
+      orderBy: [
+        {
+          plan: {
+            generatedAt: "desc",
+          },
+        },
+        {
+          day: "desc",
+        },
+      ],
     });
     console.log(`[Backend] Request finished in ${Date.now() - startTime}ms. Items: ${creatives.length}`);
     res.json(creatives);

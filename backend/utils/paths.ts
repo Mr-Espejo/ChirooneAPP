@@ -15,6 +15,7 @@ export function getAiContextPath(filename: string): string {
 
   const candidates = [
     // relative to this file (backend/utils/paths.ts)
+    path.join(__dirname, "../ai-context", filename),
     path.join(__dirname, "../../ai-context", filename),
     path.join(__dirname, "../../../ai-context", filename),
     path.join(__dirname, "../../../../ai-context", filename),

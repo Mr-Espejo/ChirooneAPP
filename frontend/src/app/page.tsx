@@ -38,6 +38,9 @@ interface Creative {
   mediaUrl: string | null;
   videoUrl: string | null;
   posts: Post[];
+  plan?: {
+    generatedAt: string;
+  };
 }
 
 export default function Dashboard() {
@@ -58,7 +61,29 @@ export default function Dashboard() {
         const response = await fetch(`${apiUrl}/api/creatives`);
         if (!response.ok) throw new Error("Failed to fetch");
         const data = await response.json();
-        setCreatives(data);
+        
+        // Sort by date: most recent first
+        // 1. If publishedAt exists, use the latest publishedAt
+        // 2. Otherwise use plan.generatedAt
+        // 3. Otherwise use 0
+        const sortedData = (data as Creative[]).sort((a, b) => {
+          const getLatestDate = (c: Creative) => {
+            const publishedDates = c.posts
+              .map(p => p.publishedAt)
+              .filter((d): d is string => !!d)
+              .map(d => new Date(d).getTime());
+            
+            if (publishedDates.length > 0) {
+              return Math.max(...publishedDates);
+            }
+            
+            return c.plan?.generatedAt ? new Date(c.plan.generatedAt).getTime() : 0;
+          };
+
+          return getLatestDate(b) - getLatestDate(a);
+        });
+
+        setCreatives(sortedData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error connecting to server");
       } finally {
@@ -596,7 +621,7 @@ function CalendarView({ creatives, onPreview }: { creatives: Creative[], onPrevi
   const dates = Object.keys(grouped).sort((a, b) => {
     if (a === "Sin Fecha") return 1;
     if (b === "Sin Fecha") return -1;
-    return a.localeCompare(b);
+    return b.localeCompare(a);
   });
 
   return (

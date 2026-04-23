@@ -10,7 +10,6 @@ COPY backend/prisma ./prisma/
 RUN npm install
 
 COPY backend/ ./
-COPY ai-context/ /ai-context/
 RUN npx prisma generate
 
 FROM node:20-slim
@@ -20,8 +19,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app /app
-COPY --from=builder /ai-context /ai-context
-
 EXPOSE 3009
 
 # Forzar ignorar SSL por la red de Hostinger si es necesario
