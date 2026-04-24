@@ -9,8 +9,10 @@ import { BlitzCreativeWeekUseCase } from "./modules/ideation/blitzCreativeWeek.u
 
 import { prisma } from "./utils/prisma.js";
 
-import brandDna from "./ai-context/brandDna.json" with { type: "json" };
+import { getAiContextPath } from "./utils/paths.js";
 
+const brandDnaPath = getAiContextPath("brandDna.json");
+const brandDna = JSON.parse(fs.readFileSync(brandDnaPath, "utf-8"));
 
 const app = express();
 const port = process.env.PORT || 3001;

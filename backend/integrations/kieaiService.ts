@@ -1,10 +1,9 @@
 import "dotenv/config";
 
 export class KieaiService {
-  private apiKey = process.env.KIEAI_API_KEY;
-
   async createVideoFromImage(imageUrl: string, prompt: string) {
-    if (!this.apiKey) {
+    const apiKey = process.env.KIEAI_API_KEY;
+    if (!apiKey) {
       console.warn("[KieaiService] KIEAI_API_KEY not found, mock task.");
       return { taskId: `mock-vid-${Date.now()}` };
     }
@@ -14,7 +13,7 @@ export class KieaiService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.apiKey}`
+          "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
           model: "grok-imagine/image-to-video",

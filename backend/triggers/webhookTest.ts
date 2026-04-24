@@ -1,0 +1,1 @@
+import { httpEndpoint } from '@trigger.dev/sdk/v3';
