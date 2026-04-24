@@ -1,5 +1,5 @@
 import { prisma } from "../../utils/prisma.js";
-import { composioService } from "../../integrations/composioService.js";
+import { socialPublishingService } from "../../integrations/socialPublishingService.js";
 
 export class PublishingService {
   async publishPendingPosts(options: { dryRun?: boolean; itemId?: string } = {}) {
@@ -49,7 +49,7 @@ export class PublishingService {
           throw new Error(`Post ${post.id} missing media URL`);
         }
 
-        const response = await composioService.publishMedia(
+        const response = await socialPublishingService.publishMedia(
           finalMediaUrl,
           caption,
           platform
